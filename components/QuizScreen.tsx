@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { Question, AnswerStatus } from '../types';
 import FishingAnimation from './FishingAnimation';
 import { getRandomOptions } from '../constants';
@@ -23,6 +23,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [targetPosition, setTargetPosition] = useState<{ left: string; top: string } | null>(null);
     const [initialDrop, setInitialDrop] = useState(true);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const LINE_TRANSITION_DURATION_MS = 1200;
 
@@ -33,85 +34,38 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
 
         return () => clearTimeout(timer);
     }, []);
+    
+    const options = useMemo(() => getRandomOptions(question), [question]);
 
-    // ✅ 보기 생성 (버튼 크기/간격 유지)
-    const options = useMemo(() => {
-        const allOptions = getRandomOptions(question);
-        return allOptions.map((opt, index) => {
-            if (question.type === 'yesno') {
-                const isLeft = opt === 'O';
-                return {
-                    text: opt,
-                    style: {
-                        left: isLeft ? '35%' : '65%', 
-                        top: '75%', // 버튼 위치 유지
-                        transform: 'translate(-50%, -50%)',
-                        fontSize: `clamp(3rem, 14vmin, 7.5rem)`, 
-                        padding: `clamp(2rem, 7vmin, 3.5rem) clamp(2.5rem, 10vmin, 5rem)`, 
-                        borderRadius: '9999px',
-                        background: isLeft
-                            ? 'linear-gradient(to bottom right, #22c55e, #16a34a)' 
-                            : 'linear-gradient(to bottom right, #ef4444, #b91c1c)', 
-                        color: 'white',
-                        boxShadow: '0 0 25px rgba(255,255,255,0.4)',
-                    },
-                };
-            } else {
-                const numCols = 4;
-                const col = index % numCols;
-                const row = Math.floor(index / numCols);
-                const x = 12 + col * 22;
-                const y = 60 + row * 12;
-
-                return {
-                    text: opt,
-                    style: {
-                        left: `${x + (Math.random() * 1.5 - 0.75)}%`,
-                        top: `${y + (Math.random() * 1.5 - 0.75)}%`,
-                        animationDelay: `${Math.random() * 2}s`,
-                        animationDuration: `${3 + Math.random() * 2}s`,
-                    },
-                };
-            }
-        });
-    }, [question]);
-
-    // ✅ 보기 클릭
     const handleOptionClick = useCallback(
-        (option: typeof options[0], element: HTMLButtonElement) => {
-            if (isSubmitting) return;
+        (optionText: string, element: HTMLButtonElement) => {
+            if (isSubmitting || !containerRef.current) return;
 
             const rect = element.getBoundingClientRect();
-            const parentRect = element.parentElement?.parentElement?.getBoundingClientRect();
-            if (!parentRect) return;
-
+            const parentRect = containerRef.current.getBoundingClientRect();
+            
             setIsSubmitting(true);
-            setSelectedAnswer(option.text);
+            setSelectedAnswer(optionText);
 
             const left = `${((rect.left - parentRect.left + rect.width / 2) / parentRect.width) * 100}%`;
-            // FIX: Calculate the vertical center of the button for the target position.
             const top = `${((rect.top - parentRect.top + rect.height / 2) / parentRect.height) * 100}%`;
             setTargetPosition({ left, top });
 
             setTimeout(() => {
                 const isCorrect =
-                    option.text.trim().toLowerCase().replace(/\s/g, '') ===
+                    optionText.trim().toLowerCase().replace(/\s/g, '') ===
                     question.answer.toLowerCase().replace(/\s/g, '');
                 setAnswerStatus(isCorrect ? 'correct' : 'incorrect');
 
                 const reelDuration = 2500;
-                let finalDelay = reelDuration;
-
                 setTimeout(() => {
                     onAnswer(isCorrect);
-                }, finalDelay);
+                }, reelDuration);
             }, LINE_TRANSITION_DURATION_MS + 100); 
-
         },
         [isSubmitting, onAnswer, question.answer, LINE_TRANSITION_DURATION_MS]
     );
 
-    // ✅ 오답 시 최상위 컨테이너에 흔들림 클래스 추가 (변경 없음)
     const quizContainerClass = useMemo(() => {
         let className = "relative w-full h-full bg-gradient-to-b from-sky-600 to-blue-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"; 
         if (answerStatus === 'incorrect') {
@@ -136,7 +90,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
     const isUrgent = timeLeft <= 10;
 
     return (
-        <div className={quizContainerClass}> 
+        <div ref={containerRef} className={quizContainerClass}> 
             <FishingAnimation
                 status={answerStatus}
                 isSubmitting={isSubmitting}
@@ -203,51 +157,62 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                     </h2>
                 </div>
             </div>
+            
+            <div className="absolute bottom-0 left-0 right-0 z-40" style={{ paddingBottom: '12vh' }}>
+                <div className={`flex justify-center items-center gap-[4vmin] px-[4vmin] ${question.type === 'yesno' ? 'flex-row' : 'flex-row flex-wrap max-w-[90%] mx-auto'}`}>
+                    {options.map((optionText) => {
+                        const isSelected = selectedAnswer === optionText;
+                        let submitEffectClass = '';
 
-            <div className="absolute inset-0 z-40">
-                {options.map((option) => {
-                    const isSelected = selectedAnswer === option.text;
-                    let submitEffectClass = '';
-
-                    if (isSubmitting) {
-                        if (answerStatus !== 'idle') {
-                            submitEffectClass = 'opacity-0 scale-75 pointer-events-none';
-                        } else {
-                            if (isSelected) {
-                                submitEffectClass = 'scale-[1.05] ring-4 ring-yellow-400/80 shadow-2xl z-50';
+                        if (isSubmitting) {
+                            if (answerStatus !== 'idle') {
+                                submitEffectClass = 'opacity-0 scale-75 pointer-events-none';
                             } else {
-                                submitEffectClass = 'opacity-10 blur-sm pointer-events-none';
+                                if (isSelected) {
+                                    submitEffectClass = 'scale-[1.05] ring-4 ring-yellow-400/80 shadow-2xl z-50';
+                                } else {
+                                    submitEffectClass = 'opacity-30 blur-sm pointer-events-none';
+                                }
                             }
                         }
-                    }
 
-                    return (
-                        <button
-                            key={option.text}
-                            onClick={(e) => handleOptionClick(option, e.currentTarget)}
-                            disabled={isSubmitting} 
-                            style={option.style}
-                            className={`
-                                absolute font-extrabold rounded-full shadow-lg border-2 border-white/60
-                                transition-all duration-[1200ms] ease-in-out transform blur-none 
-                                hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.7)]
-                                active:scale-95 active:shadow-[inset_0_0_10px_rgba(0,0,0,0.4)]
-                                backdrop-blur-[2px]
-                                animate-bobbing
-                                ${
-                                    question.type === 'yesno'
-                                        ? 'text-white border-none'
-                                        : 'bg-gradient-to-br from-yellow-300 via-yellow-200 to-orange-400 text-slate-800'
-                                }
-                                ${submitEffectClass}
-                            `}
-                        >
-                           <span style={{fontSize: `clamp(1.1rem, 4vmin, 2rem)`, padding: '2.5vmin 3.5vmin'}}>
-                              {option.text}
-                           </span>
-                        </button>
-                    );
-                })}
+                        if (question.type === 'yesno') {
+                            const isO = optionText === 'O';
+                            return (
+                                <button
+                                    key={optionText}
+                                    onClick={(e) => handleOptionClick(optionText, e.currentTarget)}
+                                    disabled={isSubmitting}
+                                    className={`font-extrabold rounded-full shadow-lg text-white border-none transition-all duration-500 ease-in-out transform hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.7)] active:scale-95 active:shadow-[inset_0_0_10px_rgba(0,0,0,0.4)] backdrop-blur-[2px] flex items-center justify-center ${isO ? 'bg-gradient-to-br from-green-500 to-green-700' : 'bg-gradient-to-br from-red-500 to-red-700'} ${submitEffectClass}`}
+                                    style={{
+                                        fontSize: `clamp(3rem, 14vmin, 7.5rem)`,
+                                        width: `clamp(120px, 28vmin, 250px)`,
+                                        height: `clamp(120px, 28vmin, 250px)`,
+                                        boxShadow: '0 0 25px rgba(255,255,255,0.4)',
+                                        lineHeight: 1,
+                                    }}
+                                >
+                                    {optionText}
+                                </button>
+                            );
+                        } else {
+                            return (
+                                <button
+                                    key={optionText}
+                                    onClick={(e) => handleOptionClick(optionText, e.currentTarget)}
+                                    disabled={isSubmitting}
+                                    className={`font-extrabold rounded-full shadow-lg border-2 border-white/60 transition-all duration-500 ease-in-out transform hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.7)] active:scale-95 active:shadow-[inset_0_0_10px_rgba(0,0,0,0.4)] backdrop-blur-[2px] bg-gradient-to-br from-yellow-300 via-yellow-200 to-orange-400 text-slate-800 flex items-center justify-center ${submitEffectClass}`}
+                                    style={{
+                                        fontSize: `clamp(1.1rem, 2.5vmin, 1.5rem)`,
+                                        padding: 'clamp(1rem, 2vmin, 1.5rem) clamp(1.5rem, 3.5vmin, 2.5rem)',
+                                    }}
+                                >
+                                    {optionText}
+                                </button>
+                            );
+                        }
+                    })}
+                </div>
             </div>
             
             <div className="absolute bottom-[2vmin] right-[2vmin] z-50 w-[12vmin] h-[12vmin] max-w-[100px] max-h-[100px] min-w-[70px] min-h-[70px]">

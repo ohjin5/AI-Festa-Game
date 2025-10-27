@@ -104,7 +104,7 @@ export const getRandomOptions = (question: Question): string[] => {
   let answerPool: string[] = [];
 
   if (question.stage === 'stage1') {
-    return shuffleArray(['O', 'X']);
+    return ['O', 'X'];
   } 
   
   if (question.stage === 'stage2') {
