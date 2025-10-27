@@ -1,23 +1,14 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Question, AnswerStatus } from '../types';
 import FishingAnimation from './FishingAnimation';
-import { QUIZ_QUESTIONS, getRandomOptions } from '../constants';
-
-// Helper to shuffle (사용하지 않으므로 유지 또는 제거 가능)
-const shuffleArray = <T,>(array: T[]): T[] => {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[i], newArray[j]];
-    }
-    return newArray;
-};
+import { getRandomOptions } from '../constants';
 
 interface QuizScreenProps {
     question: Question;
     questionNumber: number;
     totalQuestions: number;
     onAnswer: (isCorrect: boolean) => void;
+    timeLeft: number;
 }
 
 const QuizScreen: React.FC<QuizScreenProps> = ({
@@ -25,6 +16,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
     questionNumber,
     totalQuestions,
     onAnswer,
+    timeLeft,
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [answerStatus, setAnswerStatus] = useState<AnswerStatus>('idle');
@@ -54,8 +46,8 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                         left: isLeft ? '35%' : '65%', 
                         top: '75%', // 버튼 위치 유지
                         transform: 'translate(-50%, -50%)',
-                        fontSize: '5.5rem', 
-                        padding: '2rem 4.5rem', 
+                        fontSize: `clamp(3rem, 14vmin, 7.5rem)`, 
+                        padding: `clamp(2rem, 7vmin, 3.5rem) clamp(2.5rem, 10vmin, 5rem)`, 
                         borderRadius: '9999px',
                         background: isLeft
                             ? 'linear-gradient(to bottom right, #22c55e, #16a34a)' 
@@ -84,7 +76,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
         });
     }, [question]);
 
-    // ✅ 보기 클릭 (변경 없음)
+    // ✅ 보기 클릭
     const handleOptionClick = useCallback(
         (option: typeof options[0], element: HTMLButtonElement) => {
             if (isSubmitting) return;
@@ -97,7 +89,8 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
             setSelectedAnswer(option.text);
 
             const left = `${((rect.left - parentRect.left + rect.width / 2) / parentRect.width) * 100}%`;
-            const top = `${((rect.top - parentRect.top) / parentRect.height) * 100}%`;
+            // FIX: Calculate the vertical center of the button for the target position.
+            const top = `${((rect.top - parentRect.top + rect.height / 2) / parentRect.height) * 100}%`;
             setTargetPosition({ left, top });
 
             setTimeout(() => {
@@ -120,7 +113,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
 
     // ✅ 오답 시 최상위 컨테이너에 흔들림 클래스 추가 (변경 없음)
     const quizContainerClass = useMemo(() => {
-        let className = "relative w-full h-[800px] bg-gradient-to-b from-sky-600 to-blue-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"; 
+        let className = "relative w-full h-full bg-gradient-to-b from-sky-600 to-blue-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"; 
         if (answerStatus === 'incorrect') {
             className += ` animate-shake-strong`;
         }
@@ -130,11 +123,17 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
     // 거품을 생성하기 위한 배열 (10개)
     const bubbles = Array.from({ length: 10 }, (_, i) => ({
         key: i,
-        size: `${2 + Math.random() * 8}px`, // 2px ~ 10px
+        size: `${0.2 + Math.random() * 1}rem`, // responsive size
         left: `${Math.random() * 100}%`,
         delay: `${Math.random() * 5}s`,
         duration: `${5 + Math.random() * 10}s`, // 5s ~ 15s
     }));
+
+    const radius = 45;
+    const circumference = 2 * Math.PI * radius;
+    const progress = timeLeft / 30;
+    const strokeDashoffset = circumference * (1 - progress);
+    const isUrgent = timeLeft <= 10;
 
     return (
         <div className={quizContainerClass}> 
@@ -146,7 +145,6 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                 initialDrop={initialDrop} 
             />
 
-            {/* 정답/오답 플래시 (변경 없음) */}
             {(answerStatus === 'correct' || answerStatus === 'incorrect') && (
                 <div
                     key={answerStatus}
@@ -156,7 +154,6 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                 />
             )}
 
-            {/* 피드백 텍스트 (변경 없음) */}
             {(answerStatus === 'correct' || answerStatus === 'incorrect') && (
                 <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
                     <div
@@ -164,13 +161,13 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                         className={`text-4xl font-extrabold tracking-wide text-white drop-shadow-2xl animate-feedback ${
                             answerStatus === 'correct' ? 'text-green-300' : 'text-red-300'
                         }`}
+                        style={{fontSize: `clamp(2rem, 6vmin, 4rem)`}}
                     >
                         {answerStatus === 'correct' ? '🎯 정답입니다!' : '💥 오답입니다!'}
                     </div>
                 </div>
             )}
 
-            {/* 물 애니메이션 강화: Caustics 효과 (변경 없음) */}
             <div className='absolute inset-0 z-10 pointer-events-none'>
                 <div className='absolute top-[40%] left-0 w-full h-[60%] overflow-hidden'>
                     <div className='absolute inset-0 opacity-20 animate-caustics-effect'>
@@ -179,7 +176,6 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                 </div>
             </div>
             
-            {/* 거품(Bubbles) 효과 추가 (변경 없음) */}
             <div className="absolute inset-0 z-10 pointer-events-none">
                 {bubbles.map((bubble) => (
                     <div
@@ -197,19 +193,17 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                 ))}
             </div>
 
-            {/* ✅ 문제 표시 - 위치 수정 */}
-            <div className="absolute top-[10%] left-0 right-0 z-50 p-6"> 
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 shadow-[0_4px_30px_rgba(0,0,0,0.3)] border border-white/20">
-                    <p className="text-right text-sm font-semibold text-sky-200 mb-2 drop-shadow-md">
+            <div className="absolute top-[10%] left-0 right-0 z-50 p-[2vmin]"> 
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-[2vmin] shadow-[0_4px_30px_rgba(0,0,0,0.3)] border border-white/20">
+                    <p className="text-right font-semibold text-sky-200 mb-2 drop-shadow-md" style={{fontSize: `clamp(0.75rem, 2vmin, 1rem)`}}>
                         문제 {questionNumber} / {totalQuestions}
                     </p>
-                    <h2 className="text-2xl font-extrabold text-white text-center leading-relaxed drop-shadow-md">
+                    <h2 className="font-extrabold text-white text-center leading-relaxed drop-shadow-md" style={{fontSize: `clamp(1.2rem, 3.5vmin, 2.25rem)`}}>
                         {question.question}
                     </h2>
                 </div>
             </div>
 
-            {/* 보기 버튼 (위치 고정은 옵션스에서 처리) */}
             <div className="absolute inset-0 z-40">
                 {options.map((option) => {
                     const isSelected = selectedAnswer === option.text;
@@ -234,8 +228,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                             disabled={isSubmitting} 
                             style={option.style}
                             className={`
-                                absolute px-4 py-2 sm:px-5 sm:py-2 sm:text-base 
-                                text-slate-800 font-extrabold rounded-full shadow-lg border-2 border-white/60
+                                absolute font-extrabold rounded-full shadow-lg border-2 border-white/60
                                 transition-all duration-[1200ms] ease-in-out transform blur-none 
                                 hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.7)]
                                 active:scale-95 active:shadow-[inset_0_0_10px_rgba(0,0,0,0.4)]
@@ -243,21 +236,48 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                                 animate-bobbing
                                 ${
                                     question.type === 'yesno'
-                                        ? 'text-4xl text-white border-none'
-                                        : 'bg-gradient-to-br from-yellow-300 via-yellow-200 to-orange-400'
+                                        ? 'text-white border-none'
+                                        : 'bg-gradient-to-br from-yellow-300 via-yellow-200 to-orange-400 text-slate-800'
                                 }
                                 ${submitEffectClass}
                             `}
                         >
-                            {option.text}
+                           <span style={{fontSize: `clamp(1.1rem, 4vmin, 2rem)`, padding: '2.5vmin 3.5vmin'}}>
+                              {option.text}
+                           </span>
                         </button>
                     );
                 })}
             </div>
             
-            {/* CSS 애니메이션 정의 (변경 없음) */}
+            <div className="absolute bottom-[2vmin] right-[2vmin] z-50 w-[12vmin] h-[12vmin] max-w-[100px] max-h-[100px] min-w-[70px] min-h-[70px]">
+                <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r={radius} strokeWidth="10" fill="transparent" className="stroke-white/20"/>
+                    <circle
+                        cx="50"
+                        cy="50"
+                        r={radius}
+                        strokeWidth="10"
+                        fill="transparent"
+                        strokeLinecap="round"
+                        transform="rotate(-90 50 50)"
+                        className={`transition-all duration-500 ease-linear ${isUrgent ? 'stroke-red-500' : 'stroke-white'}`}
+                        style={{
+                            strokeDasharray: circumference,
+                            strokeDashoffset: strokeDashoffset,
+                        }}
+                    />
+                </svg>
+                <div 
+                    className={`absolute inset-0 flex items-center justify-center font-extrabold text-white transition-colors duration-500 ${isUrgent ? 'text-red-500 animate-pulse-timer' : ''
+                    }`}
+                    style={{ fontSize: 'clamp(1.5rem, 4vmin, 2.5rem)' }}
+                >
+                    {timeLeft}
+                </div>
+            </div>
+
             <style>{`
-                /* 💡 거품 애니메이션 Keyframes (변경 없음) */
                 @keyframes bubble-rise {
                     0% {
                         transform: translateY(0) scale(1);
@@ -267,7 +287,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                         opacity: 1;
                     }
                     100% {
-                        transform: translateY(-800px) scale(0); 
+                        transform: translateY(-100vh) scale(0); 
                         opacity: 0;
                     }
                 }
@@ -291,7 +311,6 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                 }
                 .animate-feedback { animation: feedback 2s ease-in-out forwards; }
 
-                /* 💥 릴링 실패 강화: 강한 흔들림 효과 (변경 없음) */
                 @keyframes shake-strong {
                     0% { transform: translate(0, 0); }
                     10% { transform: translate(-10px, -10px); }
@@ -312,13 +331,20 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                     perspective: 1000px;
                 }
 
-                /* ✨ 물 애니메이션 강화: Caustics 효과 개선 (변경 없음) */
                 @keyframes caustics-move {
                     0% { background-position: 0% 0%; }
                     100% { background-position: 100% 100%; } 
                 }
                 .animate-caustics-effect { 
                     animation: caustics-move 15s linear infinite alternate;
+                }
+                
+                @keyframes pulse-timer {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.1); }
+                }
+                .animate-pulse-timer {
+                    animation: pulse-timer 1s ease-in-out infinite;
                 }
 
             `}</style>

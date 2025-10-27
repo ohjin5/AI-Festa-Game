@@ -6,23 +6,27 @@ interface StartScreenProps {
 
 const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   return (
-    <div className="relative bg-black/20 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-8 sm:p-12 text-center text-white animate-fade-in overflow-hidden">
+    <div className="w-full h-full relative bg-black/20 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 text-center text-white animate-fade-in overflow-hidden flex flex-col items-center justify-center p-[4vmin]">
       <div className="relative z-10">
-        <h1 className="text-4xl sm:text-6xl font-extrabold text-white mb-4" style={{textShadow: '0 0 15px rgba(0, 190, 255, 0.7)'}}>
+        <h1 className="font-extrabold text-white mb-[2vh]" style={{fontSize: 'clamp(2.5rem, 8vmin, 6rem)', textShadow: '0 0 15px rgba(0, 190, 255, 0.7)'}}>
           🎣 정보보호 낚시 퀴즈
         </h1>
-        <p className="text-lg sm:text-xl text-sky-200 mb-8">
+        <p className="text-sky-200 mb-[4vh]" style={{fontSize: 'clamp(1rem, 3vmin, 1.5rem)'}}>
           병원 정보보호 지식을 낚아올릴 시간입니다!
         </p>
         <button
           onClick={onStart}
-          className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg hover:shadow-cyan-500/50 focus:outline-none focus:ring-4 focus:ring-cyan-300 transform hover:scale-110 transition-all duration-300 ease-in-out"
+          className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-cyan-500/50 focus:outline-none focus:ring-4 focus:ring-cyan-300 transform hover:scale-110 transition-all duration-300 ease-in-out"
+          style={{
+            fontSize: 'clamp(1rem, 4vmin, 1.75rem)',
+            padding: 'clamp(1rem, 3vmin, 2rem) clamp(2rem, 6vmin, 3.5rem)',
+          }}
         >
           퀴즈 시작
         </button>
       </div>
       
-      <div className="absolute bottom-0 left-0 w-full h-24 opacity-40 pointer-events-none">
+      <div className="absolute bottom-0 left-0 w-full h-1/4 opacity-40 pointer-events-none">
          <svg className="absolute bottom-0 animate-wave-slow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" style={{ animationDuration: '25s' }}>
             <path fill="#3b82f6" fillOpacity="0.5" d="M0,256L48,250.7C96,245,192,235,288,202.7C384,171,480,117,576,117.3C672,117,768,171,864,197.3C960,224,1056,224,1152,208C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
         </svg>

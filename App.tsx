@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { GameState, Question, QuestionStage } from './types';
 import { QUIZ_QUESTIONS } from './constants';
 import StartScreen from './components/StartScreen';
@@ -6,6 +6,7 @@ import QuizScreen from './components/QuizScreen';
 import ResultScreen from './components/ResultScreen';
 
 const TOTAL_QUESTIONS = 3;
+const GAME_DURATION_SECONDS = 30;
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(GameState.START);
@@ -13,6 +14,27 @@ const App: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [wonPrize, setWonPrize] = useState<boolean>(false);
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION_SECONDS);
+
+  useEffect(() => {
+    if (gameState !== GameState.QUIZ) {
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setTimeLeft(prevTime => {
+        if (prevTime <= 1) {
+          clearInterval(timerId);
+          setGameState(GameState.RESULT);
+          setWonPrize(false); 
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [gameState]);
 
   // ✅ 게임 시작
   const startGame = useCallback(() => {
@@ -42,6 +64,7 @@ const App: React.FC = () => {
     setScore(0);
     setWonPrize(false);
     setGameState(GameState.QUIZ);
+    setTimeLeft(GAME_DURATION_SECONDS);
   }, []);
 
   // ✅ 정답/오답 처리
@@ -77,6 +100,7 @@ const App: React.FC = () => {
     setScore(0);
     setCurrentQuestionIndex(0);
     setWonPrize(false);
+    setTimeLeft(GAME_DURATION_SECONDS);
   }, []);
 
   // ✅ 화면 렌더링
@@ -91,6 +115,7 @@ const App: React.FC = () => {
             questionNumber={currentQuestionIndex + 1}
             totalQuestions={TOTAL_QUESTIONS}
             onAnswer={handleAnswer}
+            timeLeft={timeLeft}
           />
         ) : null;
 
@@ -111,8 +136,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-sky-600 flex items-center justify-center font-sans p-4">
-      <div className="w-full max-w-4xl mx-auto">
+    <div className="w-screen h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-sky-600 flex items-center justify-center font-sans">
+      <div className="w-full h-full p-[2vmin]">
         {renderContent()}
       </div>
     </div>
