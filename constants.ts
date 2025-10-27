@@ -68,7 +68,7 @@ export const QUIZ_QUESTIONS: Question[] = [
   { question: "보안 강화된 비밀번호는 영어, 숫자 외에 이 기호를 반드시 포함해야 합니다.", answer: "특수문자", stage: "stage3", type: "short_answer" },
   { question: "보안 강화된 비밀번호는 특수문자, 숫자 외에 이 문자를 반드시 포함해야 합니다.", answer: "영어", stage: "stage3", type: "short_answer" },
   { question: "병원 내에서 USB 등 이동식 저장 매체의 사용을 통제하기 위해, 사용을 허가받은 기기만 PC에 연결되도록 막는 보안 기술을 무엇이라고 하나요?", answer: "매체제어", stage: "stage3", type: "short_answer" },
-  { question: "해커가 병원 시스템에 침입해 중요한 데이터를 암호화하고 돈을 요구하는 악성코드 공격을 무엇이라고 하나요?", answer: "랜셈웨어", stage: "stage3", type: "short_answer" },
+  { question: "해커가 병원 시스템에 침입해 중요한 데이터를 암호화하고 돈을 요구하는 악성코드 공격을 무엇이라고 하나요?", answer: "랜섬웨어", stage: "stage3", type: "short_answer" },
   { question: "병원 내 모든 교직원이 의무적으로 개인정보보호 교육을 이수해야 하는 법적 근거는 ○○○○○○○ 제28조입니다.", answer: "개인정보보호법", stage: "stage3", type: "short_answer" },
   { question: "병원 외부에서 환자의 진료 기록을 확인하기 위해 안전하게 접속하는 방식은 ○○○을 통해서만 허용됩니다.", answer: "VPN", stage: "stage3", type: "short_answer" },
   { question: "병원 내 EMR 시스템 접속 시 사용자가 누구인지 확인하는 보안 절차를 ○○이라고 합니다", answer: "인증", stage: "stage3", type: "short_answer" },
@@ -87,7 +87,7 @@ const STAGE2_ALL_ANSWERS = [
 ];
 
 const STAGE3_ALL_ANSWERS = [
-"DRM", "의무기록 창구", "개인정보보호법", "사원증", "파쇄기 사용", "L", "로그아웃", "특수문자", "영어", "매체제어", "랜셈웨어", "VPN", "인증", "민감정보", "OTP", "개인정보 유출", "접근통제", "자동백업", "피싱"
+"DRM", "의무기록 창구", "개인정보보호법", "사원증", "파쇄기 사용", "L", "로그아웃", "특수문자", "영어", "매체제어", "랜섬웨어", "VPN", "인증", "민감정보", "OTP", "개인정보 유출", "접근통제", "자동백업", "피싱"
 ];
 
 // ✅ 보기 생성 함수

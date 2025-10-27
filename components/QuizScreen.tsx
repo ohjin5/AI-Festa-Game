@@ -128,7 +128,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
         delay: `${Math.random() * 5}s`,
         duration: `${5 + Math.random() * 10}s`, // 5s ~ 15s
     }));
-
+    
     const radius = 45;
     const circumference = 2 * Math.PI * radius;
     const progress = timeLeft / 30;
@@ -176,7 +176,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                 </div>
             </div>
             
-            <div className="absolute inset-0 z-10 pointer-events-none">
+            <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
                 {bubbles.map((bubble) => (
                     <div
                         key={bubble.key}
@@ -346,7 +346,6 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                 .animate-pulse-timer {
                     animation: pulse-timer 1s ease-in-out infinite;
                 }
-
             `}</style>
         </div>
     );

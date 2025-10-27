@@ -7,13 +7,35 @@ interface StartScreenProps {
 const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   return (
     <div className="w-full h-full relative bg-black/20 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 text-center text-white animate-fade-in overflow-hidden flex flex-col items-center justify-center p-[4vmin]">
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col items-center">
         <h1 className="font-extrabold text-white mb-[2vh]" style={{fontSize: 'clamp(2.5rem, 8vmin, 6rem)', textShadow: '0 0 15px rgba(0, 190, 255, 0.7)'}}>
           🎣 정보보호 낚시 퀴즈
         </h1>
-        <p className="text-sky-200 mb-[4vh]" style={{fontSize: 'clamp(1rem, 3vmin, 1.5rem)'}}>
+        <p className="text-sky-200 mb-[2vh]" style={{fontSize: 'clamp(1rem, 3vmin, 1.5rem)'}}>
           병원 정보보호 지식을 낚아올릴 시간입니다!
         </p>
+
+        <div 
+          className="my-[4vh] w-full max-w-[85vmin] md:max-w-[600px] bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 p-[3vmin] shadow-[0_0_20px_rgba(0,190,255,0.2)]"
+        >
+          <ul className="text-left space-y-[2vmin] text-sky-100">
+            {[
+              { icon: '🎯', text: '<strong>총 3문제:</strong> O/X 1문제 + 심화 객관식 2문제' },
+              { icon: '📚', text: '모든 문제는 병원 정보보호 리플렛을 기반으로 출제' },
+              { icon: '⏱️', text: '<strong>제한 시간은 30초</strong>' },
+              { icon: '🏆', text: '3문제를 모두 맞추면 <strong>1등 응모 경품권</strong> 제공' }
+            ].map((rule, index) => (
+              <li key={index} className="flex items-start">
+                <span className="mr-3 text-cyan-300" style={{fontSize: 'clamp(1rem, 3vmin, 1.5rem)'}}>{rule.icon}</span>
+                <p 
+                  style={{fontSize: 'clamp(0.8rem, 2.2vmin, 1.1rem)'}}
+                  dangerouslySetInnerHTML={{ __html: rule.text }}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <button
           onClick={onStart}
           className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-cyan-500/50 focus:outline-none focus:ring-4 focus:ring-cyan-300 transform hover:scale-110 transition-all duration-300 ease-in-out"
