@@ -10,6 +10,27 @@ import MuteButton from './components/MuteButton';
 const TOTAL_QUESTIONS = 3;
 const GAME_DURATION_SECONDS = 30;
 
+const enterFullscreen = () => {
+  const elem = document.documentElement as HTMLElement & {
+    webkitRequestFullscreen?: () => Promise<void>;
+    msRequestFullscreen?: () => Promise<void>;
+  };
+
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen().catch(err => {
+      console.warn(`Could not enter fullscreen: ${err.message}`);
+    });
+  } else if (elem.webkitRequestFullscreen) { // Safari
+    elem.webkitRequestFullscreen().catch(err => {
+      console.warn(`Could not enter fullscreen: ${err.message}`);
+    });
+  } else if (elem.msRequestFullscreen) { // IE11 / Edge
+    elem.msRequestFullscreen().catch(err => {
+      console.warn(`Could not enter fullscreen: ${err.message}`);
+    });
+  }
+};
+
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(GameState.START);
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
@@ -48,6 +69,8 @@ const App: React.FC = () => {
 
   // ✅ 게임 시작
   const startGame = useCallback(() => {
+    enterFullscreen();
+
     // 1. 스테이지별로 문제 그룹화
     const questionsByStage = QUIZ_QUESTIONS.reduce((acc, q) => {
       if (!acc[q.stage]) {
