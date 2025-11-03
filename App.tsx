@@ -4,6 +4,8 @@ import { QUIZ_QUESTIONS } from './constants';
 import StartScreen from './components/StartScreen';
 import QuizScreen from './components/QuizScreen';
 import ResultScreen from './components/ResultScreen';
+import { audioManager } from './audio';
+import MuteButton from './components/MuteButton';
 
 const TOTAL_QUESTIONS = 3;
 const GAME_DURATION_SECONDS = 30;
@@ -15,6 +17,12 @@ const App: React.FC = () => {
   const [score, setScore] = useState(0);
   const [wonPrize, setWonPrize] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION_SECONDS);
+  const [isMuted, setIsMuted] = useState(audioManager.getMuted());
+
+  const handleToggleMute = () => {
+    audioManager.toggleMute();
+    setIsMuted(audioManager.getMuted());
+  };
 
   useEffect(() => {
     if (gameState !== GameState.QUIZ) {
@@ -26,7 +34,9 @@ const App: React.FC = () => {
         if (prevTime <= 1) {
           clearInterval(timerId);
           setGameState(GameState.RESULT);
-          setWonPrize(false); 
+          setWonPrize(false);
+          audioManager.stopBGM();
+          audioManager.playWrong();
           return 0;
         }
         return prevTime - 1;
@@ -65,6 +75,7 @@ const App: React.FC = () => {
     setWonPrize(false);
     setGameState(GameState.QUIZ);
     setTimeLeft(GAME_DURATION_SECONDS);
+    audioManager.playBGM();
   }, []);
 
   // ✅ 정답/오답 처리
@@ -74,6 +85,7 @@ const App: React.FC = () => {
       if (!isCorrect) {
         setGameState(GameState.RESULT);
         setWonPrize(false);
+        audioManager.stopBGM();
         return;
       }
 
@@ -86,6 +98,7 @@ const App: React.FC = () => {
         // 모든 문제 정답 시
         setWonPrize(true);
         setGameState(GameState.RESULT);
+        audioManager.stopBGM();
       } else {
         // 다음 문제로 이동
         setCurrentQuestionIndex(prev => prev + 1);
@@ -137,7 +150,8 @@ const App: React.FC = () => {
 
   return (
     <div className="w-screen h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-sky-600 flex items-center justify-center font-sans">
-      <div className="w-full h-full p-[2vmin]">
+      <div className="w-full h-full p-[2vmin] relative">
+        <MuteButton isMuted={isMuted} onToggle={handleToggleMute} />
         {renderContent()}
       </div>
     </div>

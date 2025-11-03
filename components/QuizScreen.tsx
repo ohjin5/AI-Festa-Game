@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import type { Question, AnswerStatus } from '../types';
 import FishingAnimation from './FishingAnimation';
 import { getRandomOptions } from '../constants';
+import { audioManager } from '../audio';
 
 interface QuizScreenProps {
     question: Question;
@@ -55,7 +56,14 @@ const QuizScreen: React.FC<QuizScreenProps> = ({
                 const isCorrect =
                     optionText.trim().toLowerCase().replace(/\s/g, '') ===
                     question.answer.toLowerCase().replace(/\s/g, '');
+                
                 setAnswerStatus(isCorrect ? 'correct' : 'incorrect');
+
+                if (isCorrect) {
+                    audioManager.playSuccess();
+                } else {
+                    audioManager.playWrong();
+                }
 
                 const reelDuration = 2500;
                 setTimeout(() => {
